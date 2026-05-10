@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小说生成器</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- Header -->
+  <header class="header">
+    <h1>📖 小说生成器</h1>
+    <span class="subtitle">自由组合风格，一键生成故事</span>
+  </header>
+
+  <div class="main">
+
+    <!-- Left: Control Panel -->
+    <aside class="panel" id="panel">
+      <div class="panel-section">
+        <div class="section-title">体裁</div>
+        <div class="tag-group" id="tag-genre">
+          <button data-val="修仙" class="tag active">修仙</button>
+          <button data-val="武侠" class="tag">武侠</button>
+          <button data-val="科幻" class="tag">科幻</button>
+          <button data-val="都市" class="tag">都市</button>
+          <button data-val="悬疑" class="tag">悬疑</button>
+          <button data-val="奇幻" class="tag">奇幻</button>
+          <button data-val="言情" class="tag">言情</button>
+          <button data-val="校园" class="tag">校园</button>
+          <button data-val="职场" class="tag">职场</button>
+          <button data-val="末日" class="tag">末日</button>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-title">基调</div>
+        <div class="tag-group" id="tag-tone">
+          <button data-val="热血" class="tag active">热血</button>
+          <button data-val="幽默" class="tag">幽默</button>
+          <button data-val="黑暗" class="tag">黑暗</button>
+          <button data-val="温馨" class="tag">温馨</button>
+          <button data-val="严肃" class="tag">严肃</button>
+          <button data-val="香艳" class="tag">香艳</button>
+          <button data-val="虐心" class="tag">虐心</button>
+          <button data-val="冷峻" class="tag">冷峻</button>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-title">人称</div>
+        <div class="tag-group" id="tag-pov">
+          <button data-val="第一人称" class="tag">第一人称</button>
+          <button data-val="第三人称" class="tag active">第三人称</button>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-title">主角类型</div>
+        <div class="tag-group" id="tag-hero">
+          <button data-val="废柴逆袭" class="tag active">废柴逆袭</button>
+          <button data-val="天才骄子" class="tag">天才骄子</button>
+          <button data-val="平凡人" class="tag">平凡人</button>
+          <button data-val="重生者" class="tag">重生者</button>
+          <button data-val="反派" class="tag">反派</button>
+          <button data-val="双主角" class="tag">双主角</button>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-title">字数</div>
+        <div class="tag-group" id="tag-length">
+          <button data-val="1000" class="tag">~1000字</button>
+          <button data-val="2000" class="tag active">~2000字</button>
+          <button data-val="3000" class="tag">~3000字</button>
+          <button data-val="5000" class="tag">~5000字</button>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-title">世界观</div>
+        <div class="tag-group" id="tag-world">
+          <button data-val="古代" class="tag active">古代</button>
+          <button data-val="现代" class="tag">现代</button>
+          <button data-val="未来" class="tag">未来</button>
+          <button data-val="异世界" class="tag">异世界</button>
+          <button data-val="末世" class="tag">末世</button>
+          <button data-val="架空历史" class="tag">架空历史</button>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-title">内容分级</div>
+        <div class="tag-group" id="tag-rating">
+          <button data-val="全年龄" class="tag active">全年龄</button>
+          <button data-val="青少年" class="tag">青少年</button>
+          <button data-val="成人向" class="tag">成人向</button>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-title">感情线</div>
+        <div class="tag-group" id="tag-romance">
+          <button data-val="无" class="tag active">无</button>
+          <button data-val="纯爱" class="tag">纯爱</button>
+          <button data-val="后宫" class="tag">后宫</button>
+          <button data-val="虐恋" class="tag">虐恋</button>
+          <button data-val="禁忌" class="tag">禁忌</button>
+        </div>
+      </div>
+
+      <div class="panel-actions">
+        <button class="btn btn-random" id="btnRandom">🎲 随机组合</button>
+        <button class="btn btn-generate" id="btnGenerate">✨ 生成小说</button>
+      </div>
+    </aside>
+
+    <!-- Right: Output -->
+    <main class="output" id="output">
+      <div class="output-placeholder">
+        <div class="placeholder-icon">📝</div>
+        <div>选择风格组合，点击"生成小说"</div>
+        <div class="placeholder-hint">风格可自由组合，每次生成结果不同</div>
+      </div>
+    </main>
+
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar" id="toolbar" style="display:none">
+    <button class="btn btn-copy" id="btnCopy">📋 复制全文</button>
+    <button class="btn btn-txt" id="btnTxt">💾 导出 TXT</button>
+    <button class="btn btn-retry" id="btnRetry">🔄 重新生成</button>
+  </div>
+
+</div>
+
+<script src="js/names.js?v=2"></script>
+<script src="js/openings.js?v=2"></script>
+<script src="js/scenes.js?v=2"></script>
+<script src="js/dialogues.js?v=2"></script>
+<script src="js/plots.js?v=2"></script>
+<script src="js/endings.js?v=2"></script>
+<script src="js/engine.js?v=2"></script>
+<script src="js/app.js?v=2"></script>
+</body>
+</html>

@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>番茄钟</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --work: #e74c3c;
+    --work-light: #fce4e4;
+    --work-glow: rgba(231, 76, 60, 0.35);
+    --break: #2ecc71;
+    --break-light: #e0f8ec;
+    --break-glow: rgba(46, 204, 113, 0.35);
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --text: #eee;
+    --text-dim: #999;
+  }
+
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: var(--bg);
+    font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+    padding: 36px;
+  }
+
+  /* ---- Timer ring ---- */
+  .ring-wrap {
+    position: relative;
+    width: 300px;
+    height: 300px;
+  }
+
+  .ring-wrap svg {
+    transform: rotate(-90deg);
+  }
+
+  .ring-bg {
+    fill: none;
+    stroke: rgba(255,255,255,0.06);
+    stroke-width: 8;
+  }
+
+  .ring-fg {
+    fill: none;
+    stroke-width: 8;
+    stroke-linecap: round;
+    transition: stroke 0.5s, stroke-dashoffset 0.3s linear;
+  }
+
+  .ring-fg.work { stroke: var(--work); filter: drop-shadow(0 0 10px var(--work-glow)); }
+  .ring-fg.break { stroke: var(--break); filter: drop-shadow(0 0 10px var(--break-glow)); }
+
+  .timer-display {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .time {
+    font-size: 64px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 2px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .label {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-top: 4px;
+    transition: color 0.5s;
+  }
+  .label.work { color: var(--work); }
+  .label.break { color: var(--break); }
+
+  /* ---- Buttons ---- */
+  .btns {
+    display: flex;
+    gap: 16px;
+  }
+
+  .btn {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.15);
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    outline: none;
+  }
+
+  .btn:hover { border-color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.05); }
+  .btn:active { transform: scale(0.93); }
+  .btn.primary { background: var(--work); border-color: var(--work); }
+  .btn.primary:hover { filter: brightness(1.15); }
+
+  .btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ---- Session count ---- */
+  .sessions {
+    color: var(--text-dim);
+    font-size: 14px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--work);
+    opacity: 0.3;
+    transition: all 0.4s;
+  }
+  .dot.done { opacity: 1; box-shadow: 0 0 6px var(--work-glow); }
+
+  /* ---- Settings ---- */
+  .settings {
+    display: flex;
+    gap: 24px;
+    color: var(--text-dim);
+    font-size: 13px;
+  }
+
+  .setting {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .setting input {
+    width: 44px;
+    text-align: center;
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--text);
+    padding: 4px 6px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+  }
+
+  .setting input:focus { border-color: rgba(255,255,255,0.35); }
+
+  .setting span { white-space: nowrap; }
+
+  /* ---- Responsive ---- */
+  @media (max-width: 400px) {
+    .ring-wrap { width: 240px; height: 240px; }
+    .time { font-size: 48px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Progress ring -->
+  <div class="ring-wrap">
+    <svg width="300" height="300" viewBox="0 0 300 300">
+      <circle class="ring-bg" cx="150" cy="150" r="136"/>
+      <circle class="ring-fg work" id="ring" cx="150" cy="150" r="136"
+              stroke-dasharray="854.513" stroke-dashoffset="0"/>
+    </svg>
+    <div class="timer-display">
+      <div class="time" id="time">25:00</div>
+      <div class="label work" id="label">专注</div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="btns">
+    <button class="btn primary" id="btnStart" title="开始" aria-label="开始">
+      <svg viewBox="0 0 24 24"><polygon points="6,3 20,12 6,21"/></svg>
+    </button>
+    <button class="btn" id="btnReset" title="重置" aria-label="重置">
+      <svg viewBox="0 0 24 24"><path d="M1 4v6h6"/><path d="M3.5 15a9 9 0 1 0 2.1-9.4L1 10"/></svg>
+    </button>
+  </div>
+
+  <!-- Session dots -->
+  <div class="sessions" id="sessions">
+    <span style="opacity:0.6">完成:</span>
+  </div>
+
+  <!-- Settings -->
+  <div class="settings">
+    <label class="setting">
+      <span>工作</span>
+      <input type="number" id="workMin" value="25" min="1" max="120"> <span>分钟</span>
+    </label>
+    <label class="setting">
+      <span>休息</span>
+      <input type="number" id="breakMin" value="5" min="1" max="60"> <span>分钟</span>
+    </label>
+  </div>
+
+</div>
+
+<script>
+  // ── State ──
+  const CIRCUMFERENCE = 2 * Math.PI * 136; // ~854.513
+
+  let workDuration = 25 * 60;   // seconds
+  let breakDuration = 5 * 60;   // seconds
+  let remaining = workDuration;
+  let totalDuration = workDuration;
+  let isBreak = false;
+  let running = false;
+  let endAt = null;
+  let timerId = null;
+  let sessions = 0;
+
+  // ── DOM refs ──
+  const $time   = document.getElementById('time');
+  const $label  = document.getElementById('label');
+  const $ring   = document.getElementById('ring');
+  const $btnStart = document.getElementById('btnStart');
+  const $btnReset = document.getElementById('btnReset');
+  const $sessions = document.getElementById('sessions');
+  const $workMin  = document.getElementById('workMin');
+  const $breakMin = document.getElementById('breakMin');
+  const $btnStartIcon = $btnStart.querySelector('svg');
+
+  const playIcon  = '<svg viewBox="0 0 24 24"><polygon points="6,3 20,12 6,21"/></svg>';
+  const pauseIcon = '<svg viewBox="0 0 24 24"><rect x="5" y="3" width="5" height="18"/><rect x="14" y="3" width="5" height="18"/></svg>';
+
+  // ── Render ──
+  function fmt(sec) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+  }
+
+  function updateDisplay() {
+    $time.textContent = fmt(remaining);
+    const progress = 1 - (remaining / totalDuration);
+    $ring.style.strokeDashoffset = CIRCUMFERENCE * (1 - progress);
+
+    // Update title
+    const mode = isBreak ? '休息' : '专注';
+    document.title = fmt(remaining) + ' - ' + mode;
+  }
+
+  function setMode(breakMode) {
+    isBreak = breakMode;
+    if (isBreak) {
+      totalDuration = breakDuration;
+      remaining = breakDuration;
+      $label.textContent = '休息';
+      $label.className = 'label break';
+      $ring.className = 'ring-fg break';
+      $btnStart.classList.remove('primary');
+      $btnStart.style.background = 'var(--break)';
+      $btnStart.style.borderColor = 'var(--break)';
+    } else {
+      totalDuration = workDuration;
+      remaining = workDuration;
+      $label.textContent = '专注';
+      $label.className = 'label work';
+      $ring.className = 'ring-fg work';
+      $btnStart.classList.add('primary');
+      $btnStart.style.background = '';
+      $btnStart.style.borderColor = '';
+    }
+    updateDisplay();
+  }
+
+  function updateDots() {
+    let html = '<span style="opacity:0.6">完成:</span>';
+    for (let i = 0; i < Math.max(sessions, 4); i++) {
+      html += `<span class="dot${i < sessions ? ' done' : ''}"></span>`;
+    }
+    $sessions.innerHTML = html;
+  }
+
+  // ── Timer ──
+  function tick() {
+    if (!running) return;
+
+    const now = Date.now() / 1000;
+    if (now >= endAt) {
+      // finished
+      remaining = 0;
+      updateDisplay();
+      finish();
+      return;
+    }
+
+    const prev = remaining;
+    remaining = Math.max(0, Math.ceil(endAt - now));
+    if (remaining !== prev) updateDisplay();
+  }
+
+  function start() {
+    if (running) {
+      // Pause
+      running = false;
+      clearInterval(timerId);
+      timerId = null;
+      endAt = null;
+      $btnStart.innerHTML = playIcon;
+      return;
+    }
+
+    // Start / Resume
+    running = true;
+    endAt = Date.now() / 1000 + remaining;
+    $btnStart.innerHTML = pauseIcon;
+    timerId = setInterval(tick, 200);
+    tick();
+  }
+
+  function reset() {
+    running = false;
+    clearInterval(timerId);
+    timerId = null;
+    endAt = null;
+    setMode(false);
+    $btnStart.innerHTML = playIcon;
+  }
+
+  function finish() {
+    running = false;
+    clearInterval(timerId);
+    timerId = null;
+    endAt = null;
+
+    playChime();
+
+    if (!isBreak) {
+      sessions++;
+      updateDots();
+      notify('🍅 番茄钟完成！', '休息一下吧~');
+      setMode(true);
+    } else {
+      notify('☕ 休息结束', '开始新的番茄钟吧！');
+      setMode(false);
+    }
+  }
+
+  // ── Sound ──
+  function playChime() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const notes = isBreak ? [523.25, 659.25, 783.99] : [783.99, 659.25, 523.25]; // C5-E5-G5 / G5-E5-C5
+
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.18, ctx.currentTime + i * 0.18);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.18 + 0.5);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + i * 0.18);
+        osc.stop(ctx.currentTime + i * 0.18 + 0.5);
+      });
+    } catch (_) { /* ignore */ }
+  }
+
+  // ── Notification ──
+  function notify(title, body) {
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'granted') {
+      new Notification(title, { body, icon: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#e74c3c"/><text x="50" y="62" text-anchor="middle" font-size="40">🍅</text></svg>') });
+    } else if (Notification.permission !== 'denied') {
+      Notification.requestPermission();
+    }
+  }
+
+  // ── Settings ──
+  $workMin.addEventListener('change', () => {
+    const v = Math.max(1, Math.min(120, parseInt($workMin.value) || 25));
+    $workMin.value = v;
+    workDuration = v * 60;
+    if (!isBreak && !running) { remaining = workDuration; totalDuration = workDuration; updateDisplay(); }
+  });
+
+  $breakMin.addEventListener('change', () => {
+    const v = Math.max(1, Math.min(60, parseInt($breakMin.value) || 5));
+    $breakMin.value = v;
+    breakDuration = v * 60;
+    if (isBreak && !running) { remaining = breakDuration; totalDuration = breakDuration; updateDisplay(); }
+  });
+
+  // ── Buttons ──
+  $btnStart.addEventListener('click', start);
+  $btnReset.addEventListener('click', reset);
+
+  // ── Keyboard shortcuts ──
+  document.addEventListener('keydown', e => {
+    if (e.code === 'Space') { e.preventDefault(); start(); }
+    if (e.code === 'KeyR') { reset(); }
+  });
+
+  // ── Init ──
+  updateDisplay();
+  updateDots();
+
+  // Request notification permission on first interaction
+  document.addEventListener('click', () => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, { once: true });
+</script>
+</body>
+</html>
